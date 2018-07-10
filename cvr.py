@@ -373,41 +373,6 @@ def shop_item(data):
     return data
 
 
-def doSize(data):
-    add = pd.DataFrame(data.groupby(["shop_id", "day"]).item_id.nunique()).reset_index()
-    add.columns = ["shop_id", "day", "shop_item_unique_day"]
-    data = data.merge(add, on=["shop_id", "day"], how="left")
-
-    user_query_day = data.groupby(['user_id', 'day']).size().reset_index().rename(columns={0: 'user_id_query_day'})
-    data = pd.merge(data, user_query_day, how='left', on=['user_id', 'day'])
-
-    data['min_10'] = data['minute'] // 10
-    data['min_15'] = data['minute'] // 15
-    data['min_30'] = data['minute'] // 30
-    data['min_45'] = data['minute'] // 45
-
-    # user 不同时间段点击次数
-    min10_user_click = data.groupby(['user_id', 'day', 'hour', 'min_10']).size().reset_index().rename(
-        columns={0: 'min10_user_click'})
-    min15_user_click = data.groupby(['user_id', 'day', 'hour', 'min_15']).size().reset_index().rename(
-        columns={0: 'min15_user_click'})
-    min30_user_click = data.groupby(['user_id', 'day', 'hour', 'min_30']).size().reset_index().rename(
-        columns={0: 'min30_user_click'})
-    min45_user_click = data.groupby(['user_id', 'day', 'hour', 'min_45']).size().reset_index().rename(
-        columns={0: 'min45_user_click'})
-
-    data = pd.merge(data, min10_user_click, 'left', on=['user_id', 'day', 'hour', 'min_10'])
-    data = pd.merge(data, min15_user_click, 'left', on=['user_id', 'day', 'hour', 'min_15'])
-    data = pd.merge(data, min30_user_click, 'left', on=['user_id', 'day', 'hour', 'min_30'])
-    data = pd.merge(data, min45_user_click, 'left', on=['user_id', 'day', 'hour', 'min_45'])
-
-    del data['min_10']
-    del data['min_15']
-    del data['min_30']
-    del data['min_45']
-
-    return data
-
 
 
 if __name__ == "__main__":
