@@ -6,6 +6,7 @@ from sklearn.metrics import log_loss
 import numpy as np
 import gc
 
+
 def timestamp_datetime(value):
     format = '%Y-%m-%d %H:%M:%S'
     value = time.localtime(value)
