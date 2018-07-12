@@ -479,246 +479,246 @@ def slide_cnt(data):
 # user_star_level 用户的星级编号，Int类型；数值越大表示用户的星级越高
 # shop_review_num_level 店铺的评价数量等级，Int类型；取值从0开始，数值越大表示评价数量越多
 # shop_star_level 店铺的星级编号，Int类型；取值从0开始，数值越大表示店铺的星级越高
-# def zuhe(data):
-#     for col in ['user_gender_id','user_age_level','user_occupation_id','user_star_level']:
-#         data[col] = data[col].apply(lambda x: 0 if x == -1 else x)
+def zuhe(data):
+    for col in ['user_gender_id','user_age_level','user_occupation_id','user_star_level']:
+        data[col] = data[col].apply(lambda x: 0 if x == -1 else x)
+
+    for col in ['item_sales_level', 'item_price_level', 'item_collected_level',
+                'user_gender_id','user_age_level','user_occupation_id','user_star_level',
+                'shop_review_num_level', 'shop_star_level']:
+        data[col] = data[col].astype(str)
+
+    print('item两两组合')
+    data['sale_price'] = data['item_sales_level'] + data['item_price_level']
+    data['sale_collect'] = data['item_sales_level'] + data['item_collected_level']
+    data['price_collect'] = data['item_price_level'] + data['item_collected_level']
+
+    print('user两两组合')
+    data['gender_age'] = data['user_gender_id'] + data['user_age_level']
+    data['gender_occ'] = data['user_gender_id'] + data['user_occupation_id']
+    data['gender_star'] = data['user_gender_id'] + data['user_star_level']
+
+    print('shop两两组合')
+    data['review_star'] = data['shop_review_num_level'] + data['shop_star_level']
+
+
+    for col in ['item_sales_level', 'item_price_level', 'item_collected_level',  'sale_price','sale_collect', 'price_collect',
+                'user_gender_id', 'user_age_level', 'user_occupation_id', 'user_star_level','gender_age','gender_occ','gender_star',
+                'shop_review_num_level','shop_star_level','review_star']:
+        data[col] = data[col].astype(int)
+
+    del data['review_star']
+
+    return data
 #
-#     for col in ['item_sales_level', 'item_price_level', 'item_collected_level',
-#                 'user_gender_id','user_age_level','user_occupation_id','user_star_level',
-#                 'shop_review_num_level', 'shop_star_level']:
-#         data[col] = data[col].astype(str)
+def item(data):
+    print('一个item有多少brand,price salse collected level……')
+
+    itemcnt = data.groupby(['item_id'], as_index=False)['instance_id'].agg({'item_cnt': 'count'})
+    data = pd.merge(data, itemcnt, on=['item_id'], how='left')
+
+    for col in ['item_brand_id','item_city_id', 'item_price_level', 'item_sales_level', 'item_collected_level', 'item_pv_level']:
+        itemcnt = data.groupby([col, 'item_id'], as_index=False)['instance_id'].agg({str(col) + '_item_cnt': 'count'})
+        data = pd.merge(data, itemcnt, on=[col, 'item_id'], how='left')
+        data[str(col) + '_item_prob']=data[str(col) + '_item_cnt']/data['item_cnt']
+    del data['item_cnt']
+
+    print('一个brand有多少price salse collected level……')
+
+    itemcnt = data.groupby(['item_brand_id'], as_index=False)['instance_id'].agg({'item_brand_cnt': 'count'})
+    data = pd.merge(data, itemcnt, on=['item_brand_id'], how='left')
+
+    for col in ['item_city_id', 'item_price_level', 'item_sales_level', 'item_collected_level', 'item_pv_level']:
+        itemcnt = data.groupby([col, 'item_brand_id'], as_index=False)['instance_id'].agg({str(col) + '_brand_cnt': 'count'})
+        data = pd.merge(data, itemcnt, on=[col, 'item_brand_id'], how='left')
+        data[str(col) + '_brand_prob'] = data[str(col) + '_brand_cnt'] / data['item_brand_cnt']
+    del data['item_brand_cnt']
+
+    print('一个city有多少item_price_level，item_sales_level，item_collected_level，item_pv_level')
+
+    itemcnt = data.groupby(['item_city_id'], as_index=False)['instance_id'].agg({'item_city_cnt': 'count'})
+    data = pd.merge(data, itemcnt, on=['item_city_id'], how='left')
+    for col in ['item_price_level', 'item_sales_level', 'item_collected_level', 'item_pv_level']:
+        itemcnt = data.groupby([col, 'item_city_id'], as_index=False)['instance_id'].agg({str(col) + '_city_cnt': 'count'})
+        data = pd.merge(data, itemcnt, on=[col, 'item_city_id'], how='left')
+        data[str(col) + '_city_prob'] = data[str(col) + '_city_cnt'] / data['item_city_cnt']
+    del data['item_city_cnt']
+
+    print('一个price有多少item_sales_level，item_collected_level，item_pv_level')
+
+    itemcnt = data.groupby(['item_price_level'], as_index=False)['instance_id'].agg({'item_price_cnt': 'count'})
+    data = pd.merge(data, itemcnt, on=['item_price_level'], how='left')
+    for col in ['item_sales_level', 'item_collected_level', 'item_pv_level']:
+        itemcnt = data.groupby([col, 'item_city_id'], as_index=False)['instance_id'].agg({str(col) + '_price_cnt': 'count'})
+        data = pd.merge(data, itemcnt, on=[col, 'item_city_id'], how='left')
+        data[str(col) + '_price_prob'] = data[str(col) + '_price_cnt'] / data['item_price_cnt']
+    del data['item_price_cnt']
+
+    print('一个item_sales_level有多少item_collected_level，item_pv_level')
+
+    itemcnt = data.groupby(['item_sales_level'], as_index=False)['instance_id'].agg({'item_salse_cnt': 'count'})
+    data = pd.merge(data, itemcnt, on=['item_sales_level'], how='left')
+    for col in ['item_collected_level', 'item_pv_level']:
+        itemcnt = data.groupby([col, 'item_sales_level'], as_index=False)['instance_id'].agg({str(col) + '_salse_cnt': 'count'})
+        data = pd.merge(data, itemcnt, on=[col, 'item_sales_level'], how='left')
+        data[str(col) + '_salse_prob'] = data[str(col) + '_salse_cnt'] / data['item_salse_cnt']
+    del data['item_salse_cnt']
+
+    print('一个item_collected_level有多少item_pv_level')
+
+    itemcnt = data.groupby(['item_collected_level'], as_index=False)['instance_id'].agg({'item_coll_cnt': 'count'})
+    data = pd.merge(data, itemcnt, on=['item_collected_level'], how='left')
+    for col in ['item_pv_level']:
+        itemcnt = data.groupby([col, 'item_collected_level'], as_index=False)['instance_id'].agg({str(col) + '_coll_cnt': 'count'})
+        data = pd.merge(data, itemcnt, on=[col, 'item_collected_level'], how='left')
+        data[str(col) + '_coll_prob'] = data[str(col) + '_coll_cnt'] / data['item_coll_cnt']
+    del data['item_coll_cnt']
+
+    return data
+
+def user(data):
+    print('用户有多少性别')
+    itemcnt = data.groupby(['user_id'], as_index=False)['instance_id'].agg({'user_cnt': 'count'})
+    data = pd.merge(data, itemcnt, on=['user_id'], how='left')
+
+    for col in ['user_gender_id','user_age_level', 'user_occupation_id', 'user_star_level']:
+        itemcnt = data.groupby([col, 'user_id'], as_index=False)['instance_id'].agg({str(col) + '_user_cnt': 'count'})
+        data = pd.merge(data, itemcnt, on=[col, 'user_id'], how='left')
+        data[str(col) + '_user_prob']=data[str(col) + '_user_cnt']/data['user_cnt']
+    del data['user_cnt']
+
+    print('性别的年龄段，职业有多少')
+    itemcnt = data.groupby(['user_gender_id'], as_index=False)['instance_id'].agg({'user_gender_cnt': 'count'})
+    data = pd.merge(data, itemcnt, on=['user_gender_id'], how='left')
+
+    for col in ['user_age_level', 'user_occupation_id', 'user_star_level']:
+        itemcnt = data.groupby([col, 'user_gender_id'], as_index=False)['instance_id'].agg({str(col) + '_user_gender_cnt': 'count'})
+        data = pd.merge(data, itemcnt, on=[col, 'user_gender_id'], how='left')
+        data[str(col) + '_user_gender_prob']=data[str(col) + '_user_gender_cnt']/data['user_gender_cnt']
+    del data['user_gender_cnt']
+
+    print('user_age_level对应的user_occupation_id，user_star_level')
+    itemcnt = data.groupby(['user_age_level'], as_index=False)['instance_id'].agg({'user_age_cnt': 'count'})
+    data = pd.merge(data, itemcnt, on=['user_age_level'], how='left')
+
+    for col in ['user_occupation_id', 'user_star_level']:
+        itemcnt = data.groupby([col, 'user_age_level'], as_index=False)['instance_id'].agg({str(col) + '_user_age_cnt': 'count'})
+        data = pd.merge(data, itemcnt, on=[col, 'user_age_level'], how='left')
+        data[str(col) + '_user_age_prob']=data[str(col) + '_user_age_cnt']/data['user_age_cnt']
+    del data['user_age_cnt']
+
+    print('user_occupation_id对应的user_star_level')
+    itemcnt = data.groupby(['user_occupation_id'], as_index=False)['instance_id'].agg({'user_occ_cnt': 'count'})
+    data = pd.merge(data, itemcnt, on=['user_occupation_id'], how='left')
+    for col in ['user_star_level']:
+        itemcnt = data.groupby([col, 'user_occupation_id'], as_index=False)['instance_id'].agg({str(col) + '_user_occ_cnt': 'count'})
+        data = pd.merge(data, itemcnt, on=[col, 'user_occupation_id'], how='left')
+        data[str(col) + '_user_occ_prob']=data[str(col) + '_user_occ_cnt']/data['user_occ_cnt']
+    del data['user_occ_cnt']
+
+    return data
 #
-#     print('item两两组合')
-#     data['sale_price'] = data['item_sales_level'] + data['item_price_level']
-#     data['sale_collect'] = data['item_sales_level'] + data['item_collected_level']
-#     data['price_collect'] = data['item_price_level'] + data['item_collected_level']
-#
-#     print('user两两组合')
-#     data['gender_age'] = data['user_gender_id'] + data['user_age_level']
-#     data['gender_occ'] = data['user_gender_id'] + data['user_occupation_id']
-#     data['gender_star'] = data['user_gender_id'] + data['user_star_level']
-#
-#     print('shop两两组合')
-#     data['review_star'] = data['shop_review_num_level'] + data['shop_star_level']
-#
-#
-#     for col in ['item_sales_level', 'item_price_level', 'item_collected_level',  'sale_price','sale_collect', 'price_collect',
-#                 'user_gender_id', 'user_age_level', 'user_occupation_id', 'user_star_level','gender_age','gender_occ','gender_star',
-#                 'shop_review_num_level','shop_star_level','review_star']:
-#         data[col] = data[col].astype(int)
-#
-#     del data['review_star']
-#
-#     return data
-#
-# def item(data):
-#     print('一个item有多少brand,price salse collected level……')
-#
-#     itemcnt = data.groupby(['item_id'], as_index=False)['instance_id'].agg({'item_cnt': 'count'})
-#     data = pd.merge(data, itemcnt, on=['item_id'], how='left')
-#
-#     for col in ['item_brand_id','item_city_id', 'item_price_level', 'item_sales_level', 'item_collected_level', 'item_pv_level']:
-#         itemcnt = data.groupby([col, 'item_id'], as_index=False)['instance_id'].agg({str(col) + '_item_cnt': 'count'})
-#         data = pd.merge(data, itemcnt, on=[col, 'item_id'], how='left')
-#         data[str(col) + '_item_prob']=data[str(col) + '_item_cnt']/data['item_cnt']
-#     del data['item_cnt']
-#
-#     print('一个brand有多少price salse collected level……')
-#
-#     itemcnt = data.groupby(['item_brand_id'], as_index=False)['instance_id'].agg({'item_brand_cnt': 'count'})
-#     data = pd.merge(data, itemcnt, on=['item_brand_id'], how='left')
-#
-#     for col in ['item_city_id', 'item_price_level', 'item_sales_level', 'item_collected_level', 'item_pv_level']:
-#         itemcnt = data.groupby([col, 'item_brand_id'], as_index=False)['instance_id'].agg({str(col) + '_brand_cnt': 'count'})
-#         data = pd.merge(data, itemcnt, on=[col, 'item_brand_id'], how='left')
-#         data[str(col) + '_brand_prob'] = data[str(col) + '_brand_cnt'] / data['item_brand_cnt']
-#     del data['item_brand_cnt']
-#
-#     print('一个city有多少item_price_level，item_sales_level，item_collected_level，item_pv_level')
-#
-#     itemcnt = data.groupby(['item_city_id'], as_index=False)['instance_id'].agg({'item_city_cnt': 'count'})
-#     data = pd.merge(data, itemcnt, on=['item_city_id'], how='left')
-#     for col in ['item_price_level', 'item_sales_level', 'item_collected_level', 'item_pv_level']:
-#         itemcnt = data.groupby([col, 'item_city_id'], as_index=False)['instance_id'].agg({str(col) + '_city_cnt': 'count'})
-#         data = pd.merge(data, itemcnt, on=[col, 'item_city_id'], how='left')
-#         data[str(col) + '_city_prob'] = data[str(col) + '_city_cnt'] / data['item_city_cnt']
-#     del data['item_city_cnt']
-#
-#     print('一个price有多少item_sales_level，item_collected_level，item_pv_level')
-#
-#     itemcnt = data.groupby(['item_price_level'], as_index=False)['instance_id'].agg({'item_price_cnt': 'count'})
-#     data = pd.merge(data, itemcnt, on=['item_price_level'], how='left')
-#     for col in ['item_sales_level', 'item_collected_level', 'item_pv_level']:
-#         itemcnt = data.groupby([col, 'item_city_id'], as_index=False)['instance_id'].agg({str(col) + '_price_cnt': 'count'})
-#         data = pd.merge(data, itemcnt, on=[col, 'item_city_id'], how='left')
-#         data[str(col) + '_price_prob'] = data[str(col) + '_price_cnt'] / data['item_price_cnt']
-#     del data['item_price_cnt']
-#
-#     print('一个item_sales_level有多少item_collected_level，item_pv_level')
-#
-#     itemcnt = data.groupby(['item_sales_level'], as_index=False)['instance_id'].agg({'item_salse_cnt': 'count'})
-#     data = pd.merge(data, itemcnt, on=['item_sales_level'], how='left')
-#     for col in ['item_collected_level', 'item_pv_level']:
-#         itemcnt = data.groupby([col, 'item_sales_level'], as_index=False)['instance_id'].agg({str(col) + '_salse_cnt': 'count'})
-#         data = pd.merge(data, itemcnt, on=[col, 'item_sales_level'], how='left')
-#         data[str(col) + '_salse_prob'] = data[str(col) + '_salse_cnt'] / data['item_salse_cnt']
-#     del data['item_salse_cnt']
-#
-#     print('一个item_collected_level有多少item_pv_level')
-#
-#     itemcnt = data.groupby(['item_collected_level'], as_index=False)['instance_id'].agg({'item_coll_cnt': 'count'})
-#     data = pd.merge(data, itemcnt, on=['item_collected_level'], how='left')
-#     for col in ['item_pv_level']:
-#         itemcnt = data.groupby([col, 'item_collected_level'], as_index=False)['instance_id'].agg({str(col) + '_coll_cnt': 'count'})
-#         data = pd.merge(data, itemcnt, on=[col, 'item_collected_level'], how='left')
-#         data[str(col) + '_coll_prob'] = data[str(col) + '_coll_cnt'] / data['item_coll_cnt']
-#     del data['item_coll_cnt']
-#
-#     return data
-#
-# def user(data):
-#     print('用户有多少性别')
-#     itemcnt = data.groupby(['user_id'], as_index=False)['instance_id'].agg({'user_cnt': 'count'})
-#     data = pd.merge(data, itemcnt, on=['user_id'], how='left')
-#
-#     for col in ['user_gender_id','user_age_level', 'user_occupation_id', 'user_star_level']:
-#         itemcnt = data.groupby([col, 'user_id'], as_index=False)['instance_id'].agg({str(col) + '_user_cnt': 'count'})
-#         data = pd.merge(data, itemcnt, on=[col, 'user_id'], how='left')
-#         data[str(col) + '_user_prob']=data[str(col) + '_user_cnt']/data['user_cnt']
-#     del data['user_cnt']
-#
-#     print('性别的年龄段，职业有多少')
-#     itemcnt = data.groupby(['user_gender_id'], as_index=False)['instance_id'].agg({'user_gender_cnt': 'count'})
-#     data = pd.merge(data, itemcnt, on=['user_gender_id'], how='left')
-#
-#     for col in ['user_age_level', 'user_occupation_id', 'user_star_level']:
-#         itemcnt = data.groupby([col, 'user_gender_id'], as_index=False)['instance_id'].agg({str(col) + '_user_gender_cnt': 'count'})
-#         data = pd.merge(data, itemcnt, on=[col, 'user_gender_id'], how='left')
-#         data[str(col) + '_user_gender_prob']=data[str(col) + '_user_gender_cnt']/data['user_gender_cnt']
-#     del data['user_gender_cnt']
-#
-#     print('user_age_level对应的user_occupation_id，user_star_level')
-#     itemcnt = data.groupby(['user_age_level'], as_index=False)['instance_id'].agg({'user_age_cnt': 'count'})
-#     data = pd.merge(data, itemcnt, on=['user_age_level'], how='left')
-#
-#     for col in ['user_occupation_id', 'user_star_level']:
-#         itemcnt = data.groupby([col, 'user_age_level'], as_index=False)['instance_id'].agg({str(col) + '_user_age_cnt': 'count'})
-#         data = pd.merge(data, itemcnt, on=[col, 'user_age_level'], how='left')
-#         data[str(col) + '_user_age_prob']=data[str(col) + '_user_age_cnt']/data['user_age_cnt']
-#     del data['user_age_cnt']
-#
-#     print('user_occupation_id对应的user_star_level')
-#     itemcnt = data.groupby(['user_occupation_id'], as_index=False)['instance_id'].agg({'user_occ_cnt': 'count'})
-#     data = pd.merge(data, itemcnt, on=['user_occupation_id'], how='left')
-#     for col in ['user_star_level']:
-#         itemcnt = data.groupby([col, 'user_occupation_id'], as_index=False)['instance_id'].agg({str(col) + '_user_occ_cnt': 'count'})
-#         data = pd.merge(data, itemcnt, on=[col, 'user_occupation_id'], how='left')
-#         data[str(col) + '_user_occ_prob']=data[str(col) + '_user_occ_cnt']/data['user_occ_cnt']
-#     del data['user_occ_cnt']
-#
-#     return data
-#
-# def user_item(data):
-#     itemcnt = data.groupby(['user_id'], as_index=False)['instance_id'].agg({'user_cnt': 'count'})
-#     data = pd.merge(data, itemcnt, on=['user_id'], how='left')
-#     print('一个user有多少item_id,item_brand_id……')
-#     for col in ['item_id',
-#                 'item_brand_id','item_city_id','item_price_level',
-#                 'item_sales_level','item_collected_level','item_pv_level']:
-#         item_shop_cnt = data.groupby([col, 'user_id'], as_index=False)['instance_id'].agg({str(col)+'_user_cnt': 'count'})
-#         data = pd.merge(data, item_shop_cnt, on=[col, 'user_id'], how='left')
-#         data[str(col) + '_user_prob'] = data[str(col) + '_user_cnt'] / data['user_cnt']
-#
-#     print('一个user_gender有多少item_id,item_brand_id……')
-#     itemcnt = data.groupby(['user_gender_id'], as_index=False)['instance_id'].agg({'user_gender_cnt': 'count'})
-#     data = pd.merge(data, itemcnt, on=['user_gender_id'], how='left')
-#     for col in ['item_id',
-#                 'item_brand_id','item_city_id','item_price_level',
-#                 'item_sales_level','item_collected_level','item_pv_level']:
-#         item_shop_cnt = data.groupby([col, 'user_gender_id'], as_index=False)['instance_id'].agg({str(col)+'_user_gender_cnt': 'count'})
-#         data = pd.merge(data, item_shop_cnt, on=[col, 'user_gender_id'], how='left')
-#         data[str(col) + '_user_gender_prob'] = data[str(col) + '_user_gender_cnt'] / data['user_gender_cnt']
-#
-#     print('一个user_age_level有多少item_id,item_brand_id……')
-#     itemcnt = data.groupby(['user_age_level'], as_index=False)['instance_id'].agg({'user_age_cnt': 'count'})
-#     data = pd.merge(data, itemcnt, on=['user_age_level'], how='left')
-#     for col in ['item_id',
-#                 'item_brand_id','item_city_id','item_price_level',
-#                 'item_sales_level','item_collected_level','item_pv_level']:
-#         item_shop_cnt = data.groupby([col, 'user_age_level'], as_index=False)['instance_id'].agg({str(col)+'_user_age_cnt': 'count'})
-#         data = pd.merge(data, item_shop_cnt, on=[col, 'user_age_level'], how='left')
-#         data[str(col) + '_user_age_prob'] = data[str(col) + '_user_age_cnt'] / data['user_age_cnt']
-#
-#     print('一个user_occupation_id有多少item_id,item_brand_id…')
-#     itemcnt = data.groupby(['user_occupation_id'], as_index=False)['instance_id'].agg({'user_occ_cnt': 'count'})
-#     data = pd.merge(data, itemcnt, on=['user_occupation_id'], how='left')
-#     for col in ['item_id',
-#                 'item_brand_id','item_city_id','item_price_level',
-#                 'item_sales_level','item_collected_level','item_pv_level']:
-#         item_shop_cnt = data.groupby([col, 'user_occupation_id'], as_index=False)['instance_id'].agg({str(col)+'_user_occ_cnt': 'count'})
-#         data = pd.merge(data, item_shop_cnt, on=[col, 'user_occupation_id'], how='left')
-#         data[str(col) + '_user_occ_prob'] = data[str(col) + '_user_occ_cnt'] / data['user_occ_cnt']
-#     return data
-#
-#
-# def user_shop(data):
-#     print('一个user有多少shop_id,shop_review_num_level……')
-#
-#     for col in ['shop_id', 'shop_review_num_level', 'shop_star_level']:
-#         item_shop_cnt = data.groupby([col, 'user_id'], as_index=False)['instance_id'].agg(
-#             {str(col) + '_user_cnt': 'count'})
-#         data = pd.merge(data, item_shop_cnt, on=[col, 'user_id'], how='left')
-#         data[str(col) + '_user_prob'] = data[str(col) + '_user_cnt'] / data['user_cnt']
-#     del data['user_cnt']
-#
-#     print('一个user_gender有多少shop_id,shop_review_num_level……')
-#     for col in ['shop_id', 'shop_review_num_level', 'shop_star_level']:
-#         item_shop_cnt = data.groupby([col, 'user_gender_id'], as_index=False)['instance_id'].agg(
-#             {str(col) + '_user_gender_cnt': 'count'})
-#         data = pd.merge(data, item_shop_cnt, on=[col, 'user_gender_id'], how='left')
-#         data[str(col) + '_user_gender_prob'] = data[str(col) + '_user_gender_cnt'] / data['user_gender_cnt']
-#     del data['user_gender_cnt']
-#
-#     print('一个user_age_level有多少shop_id,shop_review_num_level……')
-#     for col in ['shop_id', 'shop_review_num_level', 'shop_star_level']:
-#         item_shop_cnt = data.groupby([col, 'user_age_level'], as_index=False)['instance_id'].agg(
-#             {str(col) + '_user_age_cnt': 'count'})
-#         data = pd.merge(data, item_shop_cnt, on=[col, 'user_age_level'], how='left')
-#         data[str(col) + '_user_age_prob'] = data[str(col) + '_user_age_cnt'] / data['user_age_cnt']
-#     del data['user_age_cnt']
-#
-#     print('一个user_occupation_id有多少shop_id,shop_review_num_level……')
-#     for col in ['shop_id', 'shop_review_num_level', 'shop_star_level']:
-#         item_shop_cnt = data.groupby([col, 'user_occupation_id'], as_index=False)['instance_id'].agg(
-#             {str(col) + '_user_occ_cnt': 'count'})
-#         data = pd.merge(data, item_shop_cnt, on=[col, 'user_occupation_id'], how='left')
-#         data[str(col) + '_user_occ_prob'] = data[str(col) + '_user_occ_cnt'] / data['user_occ_cnt']
-#     del data['user_occ_cnt']
-#     return data
-#
-# def shop_item(data):
-#     print('一个shop有多少item_id,item_brand_id,item_city_id,item_price_level……')
-#     itemcnt = data.groupby(['shop_id'], as_index=False)['instance_id'].agg({'shop_cnt': 'count'})
-#     data = pd.merge(data, itemcnt, on=['shop_id'], how='left')
-#     for col in ['item_id',
-#                 'item_brand_id','item_city_id','item_price_level',
-#                 'item_sales_level','item_collected_level','item_pv_level']:
-#         item_shop_cnt = data.groupby([col, 'shop_id'], as_index=False)['instance_id'].agg({str(col)+'_shop_cnt': 'count'})
-#         data = pd.merge(data, item_shop_cnt, on=[col, 'shop_id'], how='left')
-#         data[str(col) + '_shop_prob'] = data[str(col) + '_shop_cnt'] / data['shop_cnt']
-#     del data['shop_cnt']
-#
-#     print('一个shop_review_num_level有多少item_id,item_brand_id,item_city_id,item_price_level……')
-#     itemcnt = data.groupby(['shop_review_num_level'], as_index=False)['instance_id'].agg({'shop_rev_cnt': 'count'})
-#     data = pd.merge(data, itemcnt, on=['shop_review_num_level'], how='left')
-#     for col in ['item_id',
-#                 'item_brand_id','item_city_id','item_price_level',
-#                 'item_sales_level','item_collected_level','item_pv_level']:
-#         item_shop_cnt = data.groupby([col, 'shop_review_num_level'], as_index=False)['instance_id'].agg({str(col)+'_shop_rev_cnt': 'count'})
-#         data = pd.merge(data, item_shop_cnt, on=[col, 'shop_review_num_level'], how='left')
-#         data[str(col) + '_shop_rev_prob'] = data[str(col) + '_shop_rev_cnt'] / data['shop_rev_cnt']
-#     del data['shop_rev_cnt']
-#     return data
+def user_item(data):
+    itemcnt = data.groupby(['user_id'], as_index=False)['instance_id'].agg({'user_cnt': 'count'})
+    data = pd.merge(data, itemcnt, on=['user_id'], how='left')
+    print('一个user有多少item_id,item_brand_id……')
+    for col in ['item_id',
+                'item_brand_id','item_city_id','item_price_level',
+                'item_sales_level','item_collected_level','item_pv_level']:
+        item_shop_cnt = data.groupby([col, 'user_id'], as_index=False)['instance_id'].agg({str(col)+'_user_cnt': 'count'})
+        data = pd.merge(data, item_shop_cnt, on=[col, 'user_id'], how='left')
+        data[str(col) + '_user_prob'] = data[str(col) + '_user_cnt'] / data['user_cnt']
+
+    print('一个user_gender有多少item_id,item_brand_id……')
+    itemcnt = data.groupby(['user_gender_id'], as_index=False)['instance_id'].agg({'user_gender_cnt': 'count'})
+    data = pd.merge(data, itemcnt, on=['user_gender_id'], how='left')
+    for col in ['item_id',
+                'item_brand_id','item_city_id','item_price_level',
+                'item_sales_level','item_collected_level','item_pv_level']:
+        item_shop_cnt = data.groupby([col, 'user_gender_id'], as_index=False)['instance_id'].agg({str(col)+'_user_gender_cnt': 'count'})
+        data = pd.merge(data, item_shop_cnt, on=[col, 'user_gender_id'], how='left')
+        data[str(col) + '_user_gender_prob'] = data[str(col) + '_user_gender_cnt'] / data['user_gender_cnt']
+
+    print('一个user_age_level有多少item_id,item_brand_id……')
+    itemcnt = data.groupby(['user_age_level'], as_index=False)['instance_id'].agg({'user_age_cnt': 'count'})
+    data = pd.merge(data, itemcnt, on=['user_age_level'], how='left')
+    for col in ['item_id',
+                'item_brand_id','item_city_id','item_price_level',
+                'item_sales_level','item_collected_level','item_pv_level']:
+        item_shop_cnt = data.groupby([col, 'user_age_level'], as_index=False)['instance_id'].agg({str(col)+'_user_age_cnt': 'count'})
+        data = pd.merge(data, item_shop_cnt, on=[col, 'user_age_level'], how='left')
+        data[str(col) + '_user_age_prob'] = data[str(col) + '_user_age_cnt'] / data['user_age_cnt']
+
+    print('一个user_occupation_id有多少item_id,item_brand_id…')
+    itemcnt = data.groupby(['user_occupation_id'], as_index=False)['instance_id'].agg({'user_occ_cnt': 'count'})
+    data = pd.merge(data, itemcnt, on=['user_occupation_id'], how='left')
+    for col in ['item_id',
+                'item_brand_id','item_city_id','item_price_level',
+                'item_sales_level','item_collected_level','item_pv_level']:
+        item_shop_cnt = data.groupby([col, 'user_occupation_id'], as_index=False)['instance_id'].agg({str(col)+'_user_occ_cnt': 'count'})
+        data = pd.merge(data, item_shop_cnt, on=[col, 'user_occupation_id'], how='left')
+        data[str(col) + '_user_occ_prob'] = data[str(col) + '_user_occ_cnt'] / data['user_occ_cnt']
+    return data
+
+
+def user_shop(data):
+    print('一个user有多少shop_id,shop_review_num_level……')
+
+    for col in ['shop_id', 'shop_review_num_level', 'shop_star_level']:
+        item_shop_cnt = data.groupby([col, 'user_id'], as_index=False)['instance_id'].agg(
+            {str(col) + '_user_cnt': 'count'})
+        data = pd.merge(data, item_shop_cnt, on=[col, 'user_id'], how='left')
+        data[str(col) + '_user_prob'] = data[str(col) + '_user_cnt'] / data['user_cnt']
+    del data['user_cnt']
+
+    print('一个user_gender有多少shop_id,shop_review_num_level……')
+    for col in ['shop_id', 'shop_review_num_level', 'shop_star_level']:
+        item_shop_cnt = data.groupby([col, 'user_gender_id'], as_index=False)['instance_id'].agg(
+            {str(col) + '_user_gender_cnt': 'count'})
+        data = pd.merge(data, item_shop_cnt, on=[col, 'user_gender_id'], how='left')
+        data[str(col) + '_user_gender_prob'] = data[str(col) + '_user_gender_cnt'] / data['user_gender_cnt']
+    del data['user_gender_cnt']
+
+    print('一个user_age_level有多少shop_id,shop_review_num_level……')
+    for col in ['shop_id', 'shop_review_num_level', 'shop_star_level']:
+        item_shop_cnt = data.groupby([col, 'user_age_level'], as_index=False)['instance_id'].agg(
+            {str(col) + '_user_age_cnt': 'count'})
+        data = pd.merge(data, item_shop_cnt, on=[col, 'user_age_level'], how='left')
+        data[str(col) + '_user_age_prob'] = data[str(col) + '_user_age_cnt'] / data['user_age_cnt']
+    del data['user_age_cnt']
+
+    print('一个user_occupation_id有多少shop_id,shop_review_num_level……')
+    for col in ['shop_id', 'shop_review_num_level', 'shop_star_level']:
+        item_shop_cnt = data.groupby([col, 'user_occupation_id'], as_index=False)['instance_id'].agg(
+            {str(col) + '_user_occ_cnt': 'count'})
+        data = pd.merge(data, item_shop_cnt, on=[col, 'user_occupation_id'], how='left')
+        data[str(col) + '_user_occ_prob'] = data[str(col) + '_user_occ_cnt'] / data['user_occ_cnt']
+    del data['user_occ_cnt']
+    return data
+
+def shop_item(data):
+    print('一个shop有多少item_id,item_brand_id,item_city_id,item_price_level……')
+    itemcnt = data.groupby(['shop_id'], as_index=False)['instance_id'].agg({'shop_cnt': 'count'})
+    data = pd.merge(data, itemcnt, on=['shop_id'], how='left')
+    for col in ['item_id',
+                'item_brand_id','item_city_id','item_price_level',
+                'item_sales_level','item_collected_level','item_pv_level']:
+        item_shop_cnt = data.groupby([col, 'shop_id'], as_index=False)['instance_id'].agg({str(col)+'_shop_cnt': 'count'})
+        data = pd.merge(data, item_shop_cnt, on=[col, 'shop_id'], how='left')
+        data[str(col) + '_shop_prob'] = data[str(col) + '_shop_cnt'] / data['shop_cnt']
+    del data['shop_cnt']
+
+    print('一个shop_review_num_level有多少item_id,item_brand_id,item_city_id,item_price_level……')
+    itemcnt = data.groupby(['shop_review_num_level'], as_index=False)['instance_id'].agg({'shop_rev_cnt': 'count'})
+    data = pd.merge(data, itemcnt, on=['shop_review_num_level'], how='left')
+    for col in ['item_id',
+                'item_brand_id','item_city_id','item_price_level',
+                'item_sales_level','item_collected_level','item_pv_level']:
+        item_shop_cnt = data.groupby([col, 'shop_review_num_level'], as_index=False)['instance_id'].agg({str(col)+'_shop_rev_cnt': 'count'})
+        data = pd.merge(data, item_shop_cnt, on=[col, 'shop_review_num_level'], how='left')
+        data[str(col) + '_shop_rev_prob'] = data[str(col) + '_shop_rev_cnt'] / data['shop_rev_cnt']
+    del data['shop_rev_cnt']
+    return data
 #user_id购物时间习惯，早中晚is_trade次数,根据每个user_id的data['hour_map']不同数值进行统计
 
 def lgbCV(train, test):
@@ -789,7 +789,7 @@ def sub(train, test, best_iter):
     sub=sub.fillna(0)
     
     #sub[['instance_id', 'predicted_score']].to_csv('result/result0320.csv',index=None,sep=' ')
-    sub[['instance_id', 'predicted_score']].to_csv(r'C:\Users\Lee\Desktop\round\result0330.txt',sep=" ",index=False)
+    sub[['instance_id', 'predicted_score']].to_csv(r'result0330.txt',sep=" ",index=False)
     return feat_imp
 #导入数据去重
 if __name__ == "__main__":
@@ -815,13 +815,13 @@ if __name__ == "__main__":
     data = shijian(data)
     data = shop_fenduan(data)
     data = slide_cnt(data)
-    # data = zuhe(data)
-    # print('全局统计特征')
-    # data = item(data)
-    # data = user(data)
-    # data = user_item(data)
-    # data = user_shop(data)
-    # data = shop_item(data)
+    data = zuhe(data)
+    print('全局统计特征')
+    data = item(data)
+    data = user(data)
+    data = user_item(data)
+    data = user_shop(data)
+    data = shop_item(data)
     print(data.columns)
 
     "线下"
